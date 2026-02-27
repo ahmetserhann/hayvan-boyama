@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import tr from './tr';
 import en from './en';
 
@@ -7,19 +7,27 @@ const translations = { tr, en };
 const LanguageContext = createContext({
   language: 'tr',
   setLanguage: () => {},
-  t: () => '',
+  t: (key) => key,
 });
 
-export function LanguageProvider({ children }) {
-  const [language, setLanguage] = useState('tr');
-
-  const t = (key) => {
+// i18n Provider - Zustand store'dan language okur, setLanguage store'a yazar
+export function LanguageProvider({ children, language = 'tr', onSetLanguage }) {
+  const t = (key, params = {}) => {
     const keys = key.split('.');
     let value = translations[language];
     for (const k of keys) {
       value = value?.[k];
     }
-    return value ?? key;
+    if (typeof value !== 'string') return key;
+
+    // Parametre interpolasyonu: {name}, {x}, {y}, {n}
+    return value.replace(/\{(\w+)\}/g, (_, k) =>
+      params[k] !== undefined ? String(params[k]) : `{${k}}`
+    );
+  };
+
+  const setLanguage = (lang) => {
+    if (onSetLanguage) onSetLanguage(lang);
   };
 
   return (

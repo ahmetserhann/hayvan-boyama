@@ -1,90 +1,117 @@
+// GDD Section 8 - English Translations
 export default {
-  welcome: {
-    title: "Let's Color! 🎨",
-    subtitle: 'Enter your name and pick an animal',
-    namePlaceholder: 'What is your name?',
-    playButton: 'PLAY! 🎨',
-    soundOn: 'Sound On',
-    soundOff: 'Sound Off',
-  },
-  demo: {
-    title: 'Hello',
-    subtitle: 'Great! Now let\'s start coloring!',
-    continueButton: 'Continue! 🚀',
-    tapToColor: 'Tap a section to color it!',
-  },
-  categories: {
-    title: 'Pick a Category',
-    subtitle: 'What do you want to color?',
-  },
-  coloring: {
-    title: 'Color!',
-    undo: 'Undo',
-    glow: 'Glow',
-    difficulty: {
-      easy: 'Easy',
-      medium: 'Medium',
-      hard: 'Hard',
-    },
-    complete: 'Done! ✅',
-  },
-  completion: {
-    title: 'Great job',
-    subtitle: 'You colored it amazingly!',
-    retry: 'Color Again 🔄',
-    next: 'Next ➡️',
-    categories: 'Categories 🏠',
-    stars1: 'Good try!',
-    stars2: 'Very nice!',
-    stars3: 'Perfect!',
-    nextItem: {
-      hayvanlar: 'Next Animal ➡️',
-      araclar: 'Next Vehicle ➡️',
-      yiyecekler: 'Next Food ➡️',
-      doga: 'Next Object ➡️',
-      deniz: 'Next Creature ➡️',
-      uzay: 'Next Object ➡️',
-      prenses: 'Next Picture ➡️',
-      dinozorlar: 'Next Dinosaur ➡️',
-    },
-  },
+  // General
+  app_title: 'Animal Coloring',
+  loading: 'LOADING...',
+
+  // Welcome / Login Screen
+  enter_name: 'Enter your name',
+  name_placeholder: 'YOUR NAME',
+  pick_animal: 'Pick your favorite animal',
+  play: 'PLAY',
+
+  // Main Menu
+  hello_name: 'Hello, {name}!',
+  categories_title: 'Categories',
+
+  // Category Names
+  sea_world: 'SEA\nWORLD',
+  farm_animals: 'FARM\nANIMALS',
+  forest_friends: 'FOREST\nFRIENDS',
+  jungle_explorers: 'JUNGLE\nEXPLORERS',
+  dino_adventure: 'DINO\nADVENTURE',
+  birds_insects: 'BIRDS &\nINSECTS',
+
+  // Coloring Screen
+  regions_done: '{x} / {y} REGIONS DONE',
+  zoom: 'Zoom',
+
+  // Tool Bar
+  pen: 'Pen',
+  eraser: 'Eraser',
+  bucket_fill: 'Bucket Fill',
+  glow: 'Glow',
+  undo: 'Undo',
+  clear: 'Clear',
+  mix_colors: 'Mix\nColors',
+
+  // Completion Screen
+  great_job: 'Great Job!',
+  rewards: 'Rewards',
+  collection_progress: 'Collection progress',
+  next: 'Next',
+  replay: 'Replay',
+  home: 'Home',
+
+  // Chest Opening (Phase 2)
+  level_complete: 'Level Complete!',
+  collect: 'Collect',
+  continue_btn: 'Continue',
+
+  // Sticker Reward (Phase 2)
+  sticker_reward: 'STICKER REWARD!',
+  add_to_collection: 'Add to Collection',
+  share: 'Share',
+  sticker_album: 'Sticker Album',
+
+  // Daily Mission (Phase 1.5)
+  daily_title: 'Daily Title',
+  claim: 'Claim',
+  later: 'Later',
+  claimed: 'Claimed',
+  new_brush: 'New brush',
+  weekly_completion: 'Weekly completion',
+  day_x: 'Day {x}',
+
+  // Bottom Navigation
+  gallery: 'Gallery',
+  settings: 'Settings',
+
+  // Settings
+  sound: 'Sound',
+  language_label: 'Language',
+  lang_tr: 'TR',
+  lang_en: 'EN',
+
+  // Popup System
+  popup_reward: 'YAY! REWARD!',
+  popup_keep_coloring: 'Keep Coloring!',
+  popup_lovely: 'LOVELY WORK!',
+  popup_more_fun: 'More Fun!',
+  popup_super_cool: 'SUPER COOL!',
+  popup_check_out: 'Check it out!',
+  view: 'VIEW',
+  open: 'OPEN',
+
+  // Error / Empty State
+  locked: 'Locked',
+  completed: 'Completed',
+  percent_done: '{n}% done',
+
+  // Animal Names
   animals: {
-    cat: 'Cat',
-    dog: 'Dog',
-    rabbit: 'Rabbit',
-    bird: 'Bird',
-    elephant: 'Elephant',
-    lion: 'Lion',
-    car: 'Car',
-    plane: 'Plane',
-    ship: 'Ship',
-    apple: 'Apple',
-    cake: 'Cake',
-    strawberry: 'Strawberry',
-    tree: 'Tree',
-    flower: 'Flower',
-    sun: 'Sun',
-    fish: 'Fish',
-    octopus: 'Octopus',
-    turtle: 'Turtle',
-    rocket: 'Rocket',
-    planet: 'Planet',
-    astronaut: 'Astronaut',
-    princess: 'Princess',
-    castle: 'Castle',
-    crown: 'Crown',
-    trex: 'T-Rex',
-    triceratops: 'Triceratops',
-    diplodocus: 'Diplodocus',
-  },
-  categoryNames: {
-    hayvanlar: 'Animals',
-    araclar: 'Vehicles',
-    yiyecekler: 'Foods',
-    doga: 'Nature',
-    deniz: 'Ocean',
-    uzay: 'Space',
-    prenses: 'Princess',
-    dinozorlar: 'Dinosaurs',
+    fish: 'Fish', octopus: 'Octopus', dolphin: 'Dolphin',
+    jellyfish: 'Jellyfish', turtle: 'Turtle', seahorse: 'Seahorse',
+    crab: 'Crab', lobster: 'Lobster', whale: 'Whale',
+    shark: 'Shark', starfish: 'Starfish', clownfish: 'Clown Fish',
+    cow: 'Cow', pig: 'Pig', chicken: 'Chicken',
+    horse: 'Horse', sheep: 'Sheep', goat: 'Goat',
+    duck: 'Duck', rabbit: 'Rabbit', rooster: 'Rooster',
+    donkey: 'Donkey', cat: 'Cat', dog: 'Dog',
+    bear: 'Bear', fox: 'Fox', deer: 'Deer',
+    squirrel: 'Squirrel', hedgehog: 'Hedgehog', owl: 'Owl',
+    wolf: 'Wolf', raccoon: 'Raccoon', frog: 'Frog',
+    lion: 'Lion', tiger: 'Tiger', monkey: 'Monkey',
+    giraffe: 'Giraffe', elephant: 'Elephant', zebra: 'Zebra',
+    parrot: 'Parrot', snake: 'Snake', crocodile: 'Crocodile',
+    hippo: 'Hippo',
+    trex: 'T-Rex', stegosaurus: 'Stegosaurus', triceratops: 'Triceratops',
+    brontosaurus: 'Brontosaurus', pterodactyl: 'Pterodactyl',
+    ankylosaurus: 'Ankylosaurus', spinosaurus: 'Spinosaurus',
+    velociraptor: 'Velociraptor',
+    butterfly: 'Butterfly', bee: 'Bee', ladybug: 'Ladybug',
+    flamingo: 'Flamingo', eagle: 'Eagle', dragonfly: 'Dragonfly',
+    peacock: 'Peacock', penguin: 'Penguin',
+    toucan: 'Toucan', hummingbird: 'Hummingbird',
   },
 };

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
+import SplashScreen from '../screens/SplashScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import DemoColoringScreen from '../screens/DemoColoringScreen';
 import CategoriesScreen from '../screens/CategoriesScreen';
@@ -11,35 +12,35 @@ import CompletionScreen from '../screens/CompletionScreen';
 const Stack = createStackNavigator();
 
 export default function AppNavigator() {
-  const [soundEnabled, setSoundEnabled] = useState(true);
-
-  // Pass soundEnabled as a prop to screens via screenOptions
-  const sharedProps = { soundEnabled, setSoundEnabled };
-
   return (
     <NavigationContainer>
       <Stack.Navigator
+        initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
           cardStyle: { backgroundColor: 'transparent' },
           animationEnabled: true,
+          cardStyleInterpolator: ({ current, layouts }) => ({
+            cardStyle: {
+              opacity: current.progress,
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width * 0.3, 0],
+                  }),
+                },
+              ],
+            },
+          }),
         }}
       >
-        <Stack.Screen name="Welcome">
-          {(props) => <WelcomeScreen {...props} {...sharedProps} />}
-        </Stack.Screen>
-        <Stack.Screen name="Demo">
-          {(props) => <DemoColoringScreen {...props} {...sharedProps} />}
-        </Stack.Screen>
-        <Stack.Screen name="Categories">
-          {(props) => <CategoriesScreen {...props} {...sharedProps} />}
-        </Stack.Screen>
-        <Stack.Screen name="Coloring">
-          {(props) => <ColoringScreen {...props} {...sharedProps} />}
-        </Stack.Screen>
-        <Stack.Screen name="Completion">
-          {(props) => <CompletionScreen {...props} {...sharedProps} />}
-        </Stack.Screen>
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="Demo" component={DemoColoringScreen} />
+        <Stack.Screen name="Categories" component={CategoriesScreen} />
+        <Stack.Screen name="Coloring" component={ColoringScreen} />
+        <Stack.Screen name="Completion" component={CompletionScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

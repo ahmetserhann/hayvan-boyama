@@ -1,82 +1,120 @@
+// GDD Section 5.1 - UI Renk Paleti
 export const COLORS = {
-  // Pastel primary palette
-  pastelPink: '#FFD1DC',
-  pastelGreen: '#B5EAD7',
-  pastelBlue: '#C7CEEA',
-  pastelYellow: '#FFDAC1',
-  pastelLavender: '#E2C1F0',
-  pastelMint: '#B5F0E2',
-  pastelPeach: '#FFB7B2',
-  pastelSky: '#AED9E0',
+  // CTA Butonları
+  ctaPrimary: '#FF4757',        // Parlak Kırmızı - PLAY butonu
+  ctaSuccess: '#2ED573',        // Parlak Yeşil - Next, Collect, Claim
+  ctaSecondary: '#45AAF2',      // Gökyüzü Mavi - Replay, Later, Continue
+  ctaAccent: '#FFC312',         // Altın Sarı - Yıldızlar, coin, seçili çerçeve
+  ctaBack: '#A55EEA',           // Koyu Mor - Geri ok, undo
+  ctaSound: '#DAA520',          // Altın - Ses aç/kapa
+  ctaPink: '#FF6B9D',           // Şeker Pembe - Banner, popup, badge
 
-  // UI colors
+  // Arka Plan Gradyanı
+  bgTop: '#B8E4FF',             // Açık Mavi
+  bgMid: '#E8D5F5',             // Lavanta
+  bgBottom: '#FFE5CC',          // Açık Turuncu
+
+  // Kartlar & Yüzeyler
+  cardBg: 'rgba(255,255,255,0.9)',
+  navBarBg: 'rgba(255,255,255,0.8)',
   white: '#FFFFFF',
   black: '#333333',
-  darkText: '#4A4A6A',
+  darkText: '#3D3D5C',
   lightText: '#8888AA',
-  shadow: 'rgba(0,0,0,0.12)',
+  gray: '#9E9E9E',
+  lightGray: '#E0E0E0',
+  darkGray: '#616161',
 
-  // Button gradients
-  playButton: ['#FF9AA2', '#FFB7B2'],
-  nextButton: ['#B5EAD7', '#85D8C5'],
-  retryButton: ['#C7CEEA', '#A0AAFA'],
+  // Arka Plan Gradyan Dizileri
+  mainBg: ['#B8E4FF', '#E8D5F5', '#FFE5CC'],
+  splashBg: ['#FFB3D9', '#C8A8E9', '#A8D8EA', '#B8F0D0'],
+  coloringBg: ['#C8E6FF', '#E8D5F5', '#FFE5CC'],
 
-  // Background gradients
-  welcomeBg: ['#FFD1DC', '#B5EAD7', '#C7CEEA'],
-  categoriesBg: ['#C7CEEA', '#FFD1DC'],
-  coloringBg: ['#F0F7FF', '#E8F5FF'],
-  completionBg: ['#FFD1DC', '#FFDAC1', '#B5EAD7'],
+  // Glossy Buton Gölge Renkleri (3D efekt için alt kenar)
+  btnRedDark: '#CC1A2E',
+  btnGreenDark: '#1AAD57',
+  btnBlueDark: '#2980B9',
+  btnPurpleDark: '#7D3CBF',
+  btnGoldDark: '#B8950F',
+  btnPinkDark: '#CC4A7A',
+  btnGrayDark: '#757575',
 
-  // Coloring palette (30 colors)
-  palette: [
-    // Kırmızılar
-    '#FF0000',
-    '#FF6B6B',
-    '#E91E63',
-    '#FF4081',
-    '#C62828',
-    // Turuncular
-    '#FF6D00',
-    '#FF9F43',
-    '#FF8C00',
-    '#FFB347',
-    // Sarılar
-    '#FFD700',
-    '#FFD93D',
-    '#FFEE58',
-    '#F9CA24',
-    // Yeşiller
-    '#4CAF50',
-    '#6BCB77',
-    '#00C853',
-    '#1B5E20',
-    '#B8E994',
-    // Maviler
-    '#4D96FF',
-    '#2196F3',
-    '#00BCD4',
-    '#1565C0',
-    // Morlar & Pembeler
-    '#9B59B6',
-    '#673AB7',
-    '#A29BFE',
-    '#FF6BA8',
-    '#FD79A8',
-    // Nötürler
-    '#795548',
-    '#9E9E9E',
-    '#FFFFFF',
-  ],
+  // Araç Buton Renkleri (Boyama Ekranı)
+  toolPen: '#2ED573',           // Yeşil - Kalem
+  toolPenDark: '#1AAD57',
+  toolEraser: '#FF6B9D',        // Pembe - Silgi
+  toolEraserDark: '#CC4A7A',
+  toolBucket: '#45AAF2',        // Mavi - Kova
+  toolBucketDark: '#2980B9',
+  toolGlow: '#FFC312',          // Altın - Parıltı
+  toolGlowDark: '#B8950F',
+  toolUndo: '#A55EEA',          // Mor - Geri Al
+  toolUndoDark: '#7D3CBF',
+  toolClear: '#9E9E9E',         // Gri - Temizle
+  toolClearDark: '#616161',
 
-  // Category card gradients
+  // Kategori Renk Temaları
+  seaWorldColor: '#45AAF2',
+  farmAnimalsColor: '#2ED573',
+  forestFriendsColor: '#6BCF7F',
+  jungleExplorerColor: '#FF9F43',
+  dinoAdventureColor: '#A55EEA',
+  birdsInsectsColor: '#FF6B9D',
+
+  // Kategori Gradyanları
   categoryGradients: [
-    ['#FFD1DC', '#FFB7B2'],
-    ['#B5EAD7', '#85D8C5'],
-    ['#C7CEEA', '#A0AAFA'],
-    ['#FFDAC1', '#FFB347'],
-    ['#AED9E0', '#7EC8DA'],
-    ['#E2C1F0', '#C39BD3'],
-    ['#FFB7B2', '#FF8DA1'],
-    ['#B5F0E2', '#5DDEBC'],
+    ['#74B9FF', '#0984E3'],     // Sea World - Mavi
+    ['#55EFC4', '#00B894'],     // Farm Animals - Yeşil
+    ['#81ECEC', '#00CEC9'],     // Forest Friends - Teal
+    ['#FDCB6E', '#E17055'],     // Jungle - Turuncu
+    ['#A29BFE', '#6C5CE7'],     // Dino - Mor
+    ['#FD79A8', '#E84393'],     // Birds - Pembe
   ],
+
+  // Boyama Paleti (16+ renk)
+  colorPalette: [
+    '#FF4757',  // Kırmızı
+    '#FF9F43',  // Turuncu
+    '#FFC312',  // Sarı
+    '#2ED573',  // Yeşil
+    '#7BED9F',  // Açık Yeşil
+    '#1E90FF',  // Mavi
+    '#70A1FF',  // Açık Mavi
+    '#5352ED',  // İndigo
+    '#A55EEA',  // Mor
+    '#FF6B9D',  // Pembe
+    '#FF6348',  // Mercan
+    '#1DD1A1',  // Turkuaz
+    '#00D2D3',  // Cyan
+    '#54A0FF',  // Gökyüzü
+    '#FFEAA7',  // Pastel Sarı
+    '#DFE6E9',  // Gümüş
+    '#2D3436',  // Neredeyse Siyah
+    '#FFFFFF',  // Beyaz
+    '#795548',  // Kahverengi
+    '#FF7675',  // Mercan Pembe
+    '#6C5CE7',  // Koyu Mor
+    '#00B894',  // Zümrüt
+    '#FDCB6E',  // Bej Sarı
+    '#B2BEC3',  // Açık Gri
+  ],
+
+  // Yıldız renkleri
+  starGold: '#FFC312',
+  starEmpty: '#DFE6E9',
+
+  // İlerleme çubuğu
+  progressBg: 'rgba(255,255,255,0.4)',
+  progressFill: ['#FF4757', '#FF9F43', '#FFC312', '#2ED573'],
+
+  // Kilitli kart
+  lockedOverlay: 'rgba(0,0,0,0.35)',
+  lockIcon: '#FFC312',
+
+  // Konfeti renkleri
+  confetti: ['#FF4757', '#FF9F43', '#FFC312', '#2ED573', '#45AAF2', '#A55EEA', '#FF6B9D'],
+
+  // SVG çizgi rengi
+  svgStroke: '#2D3436',
+  svgFill: '#FAFAFA',
 };

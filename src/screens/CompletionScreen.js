@@ -32,6 +32,7 @@ import {
 import { useTranslation } from '../i18n/index';
 import useAppStore from '../store/useAppStore';
 import { CATEGORIES_V2 } from '../data/categoriesData';
+import { useSound } from '../hooks/useSound';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -65,7 +66,7 @@ function AnimalPreview({ animal, regionColors }) {
 }
 
 // "Great Job!" banner
-function GreatJobBanner() {
+function GreatJobBanner({ text }) {
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
   const rotateAnim = useRef(new Animated.Value(-0.05)).current;
 
@@ -101,7 +102,7 @@ function GreatJobBanner() {
         style={styles.banner}
       >
         <View style={styles.bannerHighlight} />
-        <Text style={styles.bannerText}>Great Job!</Text>
+        <Text style={styles.bannerText}>{text}</Text>
       </LinearGradient>
     </Animated.View>
   );
@@ -162,6 +163,13 @@ export default function CompletionScreen({ navigation, route }) {
 
   // Koleksiyon ilerlemesi
   const completedAnimals = useAppStore((s) => s.completedAnimals);
+  const soundEnabled = useAppStore((s) => s.soundEnabled);
+  const { playComplete } = useSound(soundEnabled);
+
+  useEffect(() => {
+    playComplete();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const completedInCat = category.animals.filter((a) => completedAnimals[a.id]).length;
   const catProgress = category.animals.length > 0 ? completedInCat / category.animals.length : 0;
 
@@ -202,7 +210,7 @@ export default function CompletionScreen({ navigation, route }) {
         <BearMascot />
 
         {/* "Great Job!" banner */}
-        <GreatJobBanner />
+        <GreatJobBanner text={t('great_job')} />
 
         {/* Yıldızlar (kartın üstünde) */}
         <View style={styles.starsAboveCard}>

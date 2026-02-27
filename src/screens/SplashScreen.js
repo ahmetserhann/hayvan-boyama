@@ -16,12 +16,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
 import { SIZES } from '../theme/fonts';
+import { useTranslation } from '../i18n/index';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 
 // "LOADING..." harflerinin renkleri
 const LETTER_COLORS = ['#FF6B9D', '#FF9F43', '#FFC312', '#2ED573', '#45AAF2', '#A55EEA', '#FF6B9D', '#FF9F43', '#FF4757', '#FFC312'];
-const LOADING_TEXT = 'LOADING...';
 
 // Bulut konfigürasyonları
 const CLOUDS = [
@@ -174,6 +174,9 @@ function LoadingBar() {
 }
 
 export default function SplashScreen({ navigation }) {
+  const t = useTranslation();
+  const loadingText = t('loading');
+
   useEffect(() => {
     const timer = setTimeout(() => {
       navigation.replace('Welcome');
@@ -206,7 +209,7 @@ export default function SplashScreen({ navigation }) {
 
         {/* LOADING... yazısı - her harf farklı renk */}
         <View style={styles.loadingTextRow}>
-          {LOADING_TEXT.split('').map((ch, i) => (
+          {loadingText.split('').map((ch, i) => (
             <Text key={i} style={[styles.loadingLetter, { color: LETTER_COLORS[i % LETTER_COLORS.length] }]}>
               {ch}
             </Text>

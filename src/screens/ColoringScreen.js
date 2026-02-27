@@ -25,6 +25,7 @@ import { GradientBackground, GlossyButton } from '../components/common';
 import { useTranslation } from '../i18n/index';
 import useAppStore from '../store/useAppStore';
 import { CATEGORIES_V2 } from '../data/categoriesData';
+import { useSound } from '../hooks/useSound';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 
@@ -131,6 +132,7 @@ export default function ColoringScreen({ navigation, route }) {
   const soundEnabled = useAppStore((s) => s.soundEnabled);
   const setSoundEnabled = useAppStore((s) => s.setSoundEnabled);
   const completeAnimal = useAppStore((s) => s.completeAnimal);
+  const { playPop, playClick } = useSound(soundEnabled);
 
   // Route params
   const categoryId = route?.params?.categoryId || 'sea_world';
@@ -147,51 +149,50 @@ export default function ColoringScreen({ navigation, route }) {
   const [history, setHistory] = useState([]);             // boyama geçmişi (undo için)
   const [sparkle, setSparkle] = useState(null);           // { x, y }
   const [glowMode, setGlowMode] = useState(false);
+  const completedRef = useRef(false);
 
   const coloredCount = Object.keys(regionColors).length;
   const totalRegions = animal.regions.length;
   const progress = totalRegions > 0 ? coloredCount / totalRegions : 0;
 
   // Bölgeye dokunma
-  const handleRegionPress = useCallback((regionId, event) => {
+  const handleRegionPress = useCallback((regionId) => {
     if (activeTool === 'undo' || activeTool === 'clear') return;
 
     const newColor = activeTool === 'eraser'
       ? null
       : (activeTool === 'glow' ? selectedColor + 'CC' : selectedColor);
 
+    // Yeni renk haritasını senkron hesapla (stale state sorununu önler)
+    const updatedColors = { ...regionColors };
+    if (newColor === null) {
+      delete updatedColors[regionId];
+    } else {
+      updatedColors[regionId] = newColor;
+    }
+
     setHistory((prev) => [...prev, { ...regionColors }]);
+    setRegionColors(updatedColors);
 
-    setRegionColors((prev) => {
-      const updated = { ...prev };
-      if (newColor === null) {
-        delete updated[regionId];
-      } else {
-        updated[regionId] = newColor;
-      }
-      return updated;
-    });
-
-    // Sparkle efekti (bucket ve pen araçlarında)
-    if (activeTool === 'bucket' || activeTool === 'pen') {
+    // Sparkle + ses efekti
+    if (activeTool !== 'eraser') {
       const px = SW / 2;
       const py = SH * 0.35;
       setSparkle({ x: px, y: py, id: Date.now() });
       setTimeout(() => setSparkle(null), 600);
+      playPop();
     }
 
     // Tamamlandı mı?
-    const newCount = activeTool === 'eraser'
-      ? coloredCount - (regionColors[regionId] ? 1 : 0)
-      : coloredCount + (regionColors[regionId] ? 0 : 1);
-
+    const newCount = Object.keys(updatedColors).length;
     if (newCount === totalRegions) {
-      handleComplete(regionColors);
+      setTimeout(() => handleComplete(updatedColors), 350);
     }
-  }, [activeTool, selectedColor, regionColors, coloredCount, totalRegions]);
+  }, [activeTool, selectedColor, regionColors, totalRegions, playPop]);
 
   // Araç basımı
   const handleToolPress = useCallback((toolId) => {
+    playClick();
     if (toolId === 'undo') {
       if (history.length > 0) {
         setRegionColors(history[history.length - 1]);
@@ -214,11 +215,14 @@ export default function ColoringScreen({ navigation, route }) {
       setGlowMode((g) => !g);
     }
     setActiveTool(toolId);
-  }, [history, t]);
+  }, [history, t, playClick]);
 
-  // Tamamlama
+  // Tamamlama (çift çağrıya karşı ref koruması)
   const handleComplete = useCallback((colors) => {
-    const stars = coloredCount >= totalRegions ? 3 : coloredCount >= totalRegions * 0.7 ? 2 : 1;
+    if (completedRef.current) return;
+    completedRef.current = true;
+    const count = Object.keys(colors).length;
+    const stars = count >= totalRegions ? 3 : count >= Math.ceil(totalRegions * 0.7) ? 2 : 1;
     completeAnimal(animal.id, stars, colors);
     navigation.navigate('Completion', {
       animalId: animal.id,
@@ -227,7 +231,7 @@ export default function ColoringScreen({ navigation, route }) {
       stars,
       regionColors: colors,
     });
-  }, [coloredCount, totalRegions, animal, categoryId, animalIndex]);
+  }, [totalRegions, animal, categoryId, animalIndex, completeAnimal]);
 
   const handleBack = () => navigation.goBack();
 
@@ -277,7 +281,7 @@ export default function ColoringScreen({ navigation, route }) {
         <View style={styles.progressBadge}>
           <LinearGradient colors={['#5BF09A', '#2ED573']} style={styles.progressBadgeInner}>
             <Text style={styles.progressText}>
-              {`${coloredCount} / ${totalRegions} `}{t('regions_done').split('{x}')[1]?.split('{y}')[1]?.trim() || 'REGIONS DONE'}
+              {t('regions_done', { x: coloredCount, y: totalRegions })}
             </Text>
             <View style={styles.progressBarSmall}>
               <View style={[styles.progressBarFill, { width: `${Math.round(progress * 100)}%` }]} />

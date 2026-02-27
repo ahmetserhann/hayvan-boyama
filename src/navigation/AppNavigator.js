@@ -4,7 +4,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import SplashScreen from '../screens/SplashScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
-import DemoColoringScreen from '../screens/DemoColoringScreen';
 import CategoriesScreen from '../screens/CategoriesScreen';
 import ColoringScreen from '../screens/ColoringScreen';
 import CompletionScreen from '../screens/CompletionScreen';
@@ -37,7 +36,6 @@ export default function AppNavigator() {
       >
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="Demo" component={DemoColoringScreen} />
         <Stack.Screen name="Categories" component={CategoriesScreen} />
         <Stack.Screen name="Coloring" component={ColoringScreen} />
         <Stack.Screen name="Completion" component={CompletionScreen} />

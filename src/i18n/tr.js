@@ -21,6 +21,11 @@ export default {
   jungle_explorers: 'ORMAN\nKEŞİFÇİLERİ',
   dino_adventure: 'DİNO\nSERÜVENİ',
   birds_insects: 'KUŞLAR VE\nBÖCEKLER',
+  polar_world: 'KUTUP\nDÜNYASI',
+  pets: 'EVCİL\nHAYVANLAR',
+  safari: 'SAFARİ',
+  night_world: 'GECE\nDÜNYASI',
+  mini_world: 'MİNİ\nDÜNYA',
 
   // Boyama Ekranı
   regions_done: '{x} / {y} bölge tamam',

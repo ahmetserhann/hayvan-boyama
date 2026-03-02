@@ -21,6 +21,11 @@ export default {
   jungle_explorers: 'JUNGLE\nEXPLORERS',
   dino_adventure: 'DINO\nADVENTURE',
   birds_insects: 'BIRDS &\nINSECTS',
+  polar_world: 'POLAR\nWORLD',
+  pets: 'PETS',
+  safari: 'SAFARI',
+  night_world: 'NIGHT\nWORLD',
+  mini_world: 'MINI\nWORLD',
 
   // Coloring Screen
   regions_done: '{x} / {y} REGIONS DONE',

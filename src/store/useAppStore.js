@@ -16,8 +16,9 @@ const useAppStore = create((set, get) => ({
   completedAnimals: {},   // { animalId: { stars: 3, coloredAt: timestamp, colors: {} } }
   categoryProgress: {},   // { categoryId: { completed: 5, total: 12 } }
   coins: 0,               // Altın para (Faz 1.5)
-  dailyStreak: 0,         // Günlük görev serisi (Faz 1.5)
+  dailyStreak: 0,         // Günlük görev serisi
   lastDailyClaimDate: null,
+  claimedDates: [],       // ['YYYY-MM-DD', ...] — tüm zamanlar claim edilen günler
 
   // Güncel boyama oturumu
   currentAnimal: null,
@@ -67,6 +68,29 @@ const useAppStore = create((set, get) => ({
     get().addCoins(coinReward);
   },
 
+  // Günlük ödülü claim et
+  claimDailyReward: () => {
+    const today = new Date().toISOString().split('T')[0];
+    const current = get().claimedDates;
+    if (current.includes(today)) return; // Bugün zaten alındı
+
+    // Streak hesapla
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const prevStreak = get().dailyStreak;
+    const newStreak = current.includes(yesterdayStr) ? prevStreak + 1 : 1;
+
+    const updated = [...current, today];
+    set({ claimedDates: updated, lastDailyClaimDate: today, dailyStreak: newStreak });
+    AsyncStorage.setItem('claimedDates', JSON.stringify(updated)).catch(() => {});
+    AsyncStorage.setItem('dailyStreak', String(newStreak)).catch(() => {});
+
+    // Ödül: 25 coin + streak bonusu
+    const bonus = newStreak >= 7 ? 50 : 0;
+    get().addCoins(25 + bonus);
+  },
+
   addCoins: (amount) => {
     const newCoins = get().coins + amount;
     set({ coins: newCoins });
@@ -97,12 +121,16 @@ const useAppStore = create((set, get) => ({
         langRaw,
         nameRaw,
         coinsRaw,
+        claimedRaw,
+        streakRaw,
       ] = await Promise.all([
         AsyncStorage.getItem('completedAnimals'),
         AsyncStorage.getItem('soundEnabled'),
         AsyncStorage.getItem('language'),
         AsyncStorage.getItem('userName'),
         AsyncStorage.getItem('coins'),
+        AsyncStorage.getItem('claimedDates'),
+        AsyncStorage.getItem('dailyStreak'),
       ]);
 
       const updates = {};
@@ -111,6 +139,8 @@ const useAppStore = create((set, get) => ({
       if (langRaw) updates.language = langRaw;
       if (nameRaw) updates.userName = nameRaw;
       if (coinsRaw) updates.coins = parseInt(coinsRaw, 10) || 0;
+      if (claimedRaw) updates.claimedDates = JSON.parse(claimedRaw);
+      if (streakRaw) updates.dailyStreak = parseInt(streakRaw, 10) || 0;
 
       set(updates);
     } catch (e) {

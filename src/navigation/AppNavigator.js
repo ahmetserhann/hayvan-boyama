@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import SplashScreen from '../screens/SplashScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
+import DailyMissionScreen from '../screens/DailyMissionScreen';
 import MainTabNavigator from './MainTabNavigator';
 import ColoringScreen from '../screens/ColoringScreen';
 import CompletionScreen from '../screens/CompletionScreen';
@@ -24,6 +25,13 @@ export default function AppNavigator() {
         {/* Başlangıç akışı */}
         <Stack.Screen name="Splash" component={SplashScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ animation: 'fade' }} />
+
+        {/* Günlük görev — OYNA'dan sonra gösterilir */}
+        <Stack.Screen
+          name="DailyMission"
+          component={DailyMissionScreen}
+          options={{ animation: 'slide_from_bottom' }}
+        />
 
         {/* Ana uygulama — Tab bar burada sabit kalır */}
         <Stack.Screen

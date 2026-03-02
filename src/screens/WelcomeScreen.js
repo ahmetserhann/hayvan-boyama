@@ -195,7 +195,7 @@ export default function WelcomeScreen({ navigation }) {
   const [name, setName]                   = useState(existingName || '');
   const [selectedAnimalId, setSelectedAnimalId] = useState(existingAnimal?.id || null);
 
-  const goToMain = () => navigation.navigate('MainTabs');
+  const goToMain = () => navigation.navigate('DailyMission');
 
   const handlePlayNew = async () => {
     if (!name.trim()) return;

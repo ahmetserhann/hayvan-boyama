@@ -19,6 +19,7 @@ import { COLORS } from '../theme/colors';
 import { SIZES } from '../theme/fonts';
 import { GradientBackground, GlossyButton } from '../components/common';
 import { useTranslation, useLanguage } from '../i18n/index';
+import { CommonActions } from '@react-navigation/native';
 import useAppStore from '../store/useAppStore';
 
 const { width: SW, height: SH } = Dimensions.get('window');
@@ -195,7 +196,19 @@ export default function WelcomeScreen({ navigation }) {
   const [name, setName]                   = useState(existingName || '');
   const [selectedAnimalId, setSelectedAnimalId] = useState(existingAnimal?.id || null);
 
-  const goToMain = () => navigation.navigate('DailyMission');
+  const goToMain = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const alreadyClaimed = useAppStore.getState().claimedDates.includes(today);
+    // Bugün alındıysa direkt MainTabs, almadıysa MainTabs + DailyMission (popup üste)
+    navigation.dispatch(
+      CommonActions.reset({
+        index: alreadyClaimed ? 0 : 1,
+        routes: alreadyClaimed
+          ? [{ name: 'MainTabs' }]
+          : [{ name: 'MainTabs' }, { name: 'DailyMission' }],
+      })
+    );
+  };
 
   const handlePlayNew = async () => {
     if (!name.trim()) return;

@@ -26,11 +26,11 @@ export default function AppNavigator() {
         <Stack.Screen name="Splash" component={SplashScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ animation: 'fade' }} />
 
-        {/* Günlük görev — OYNA'dan sonra gösterilir */}
+        {/* Günlük görev — MainTabs üstünde şeffaf modal popup */}
         <Stack.Screen
           name="DailyMission"
           component={DailyMissionScreen}
-          options={{ animation: 'slide_from_bottom' }}
+          options={{ presentation: 'transparentModal', animation: 'fade' }}
         />
 
         {/* Ana uygulama — Tab bar burada sabit kalır */}

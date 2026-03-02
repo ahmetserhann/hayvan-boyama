@@ -1,8 +1,9 @@
-// DailyMissionScreen — Günlük Görev
-// gunluk-gorev.png tasarımına birebir uygun
-// Akış: Welcome → DailyMission → MainTabs
+// DailyMissionScreen — Günlük Görev Popup
+// transparentModal olarak açılır → altta HomeScreen görünür
+// Al → ödül alınır + goBack()
+// Sonra → sadece goBack() (aynı gün tekrar açılabilir)
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,17 +12,16 @@ import {
   Animated,
   Easing,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GradientBackground } from '../components/common';
 import { useTranslation } from '../i18n/index';
 import useAppStore from '../store/useAppStore';
-import { COLORS } from '../theme/colors';
 
-const { width: SW } = Dimensions.get('window');
-const CARD_W = SW - 40;
-const CELL_SIZE = (CARD_W - 48) / 4; // 4 sütun
+const { width: SW, height: SH } = Dimensions.get('window');
+const POPUP_W = SW - 48;
+const CELL_SIZE = (POPUP_W - 48 - 24) / 4; // 4 sütun, gap 8
 
 // ─── Tarih yardımcıları ────────────────────────────────────────────────────
 function toDateStr(date = new Date()) {
@@ -30,7 +30,7 @@ function toDateStr(date = new Date()) {
 
 function getWeekDays() {
   const today = new Date();
-  const dow = today.getDay(); // 0=Pazar
+  const dow = today.getDay();
   const monday = new Date(today);
   monday.setDate(today.getDate() - ((dow + 6) % 7));
   return Array.from({ length: 7 }, (_, i) => {
@@ -42,7 +42,7 @@ function getWeekDays() {
 
 function getDayNumber() {
   const dow = new Date().getDay();
-  return dow === 0 ? 7 : dow; // 1=Pzt … 7=Paz
+  return dow === 0 ? 7 : dow;
 }
 
 function getDayStatus(dateStr, todayStr, claimedDates) {
@@ -54,7 +54,6 @@ function getDayStatus(dateStr, todayStr, claimedDates) {
 
 // ─── Gün hücresi ──────────────────────────────────────────────────────────
 function DayCell({ index, status }) {
-  const dayLabel = `Gün ${index + 1}`;
   const isToday   = status === 'today';
   const isClaimed = status === 'claimed';
   const isLocked  = status === 'locked';
@@ -67,21 +66,22 @@ function DayCell({ index, status }) {
       isToday   && styles.dayCellToday,
       isClaimed && styles.dayCellClaimed,
     ]}>
-      <Text style={[styles.dayCellLabel, isDim && styles.dimText]}>{dayLabel}</Text>
-      <Text style={[styles.dayCellEmoji, isDim && { opacity: 0.35 }]}>🎨</Text>
+      <Text style={[styles.dayCellLabel, isDim && styles.dimText]}>
+        Gün {index + 1}
+      </Text>
+      <Text style={[styles.dayCellEmoji, isDim && { opacity: 0.3 }]}>🎨</Text>
       <Text style={[
         styles.dayCellStatus,
         isClaimed && { color: '#00B894' },
         isToday   && { color: '#E17055' },
         isDim     && { color: '#B2BEC3' },
       ]}>
-        {isClaimed ? 'Alındı'   :
-         isToday   ? 'Yeni Fırça!' :
-         isMissed  ? 'Kaçırıldı' :
-                     'Kilitli'}
+        {isClaimed ? 'Alındı'
+         : isToday   ? 'Bugün!'
+         : isMissed  ? 'Kaçırıldı'
+         :              'Kilitli'}
       </Text>
 
-      {/* Alındı overlay */}
       {isClaimed && (
         <View style={styles.claimedOverlay}>
           <View style={styles.claimedCircle}>
@@ -89,328 +89,278 @@ function DayCell({ index, status }) {
           </View>
         </View>
       )}
-
-      {/* Kilitli overlay */}
       {isLocked && (
         <View style={styles.lockOverlay}>
-          <Text style={styles.lockIcon}>🔒</Text>
+          <Text style={styles.lockEmoji}>🔒</Text>
         </View>
       )}
     </View>
   );
 }
 
-// ─── Ana ekran ────────────────────────────────────────────────────────────
+// ─── Ana popup ekranı ─────────────────────────────────────────────────────
 export default function DailyMissionScreen({ navigation }) {
   const t = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const claimedDates    = useAppStore((s) => s.claimedDates);
+  const claimedDates     = useAppStore((s) => s.claimedDates);
   const claimDailyReward = useAppStore((s) => s.claimDailyReward);
-  const dailyStreak     = useAppStore((s) => s.dailyStreak);
+  const dailyStreak      = useAppStore((s) => s.dailyStreak);
 
-  const todayStr  = toDateStr();
-  const weekDays  = getWeekDays();
-  const dayNumber = getDayNumber();
-
+  const todayStr   = toDateStr();
+  const weekDays   = getWeekDays();
+  const dayNumber  = getDayNumber();
   const alreadyClaimed = claimedDates.includes(todayStr);
   const weekClaimed    = weekDays.filter(d => claimedDates.includes(d)).length;
   const weekProgress   = weekClaimed / 7;
 
   // ── Animasyonlar ─────────────────────────────────────────────────────────
-  const cardAnim  = useRef(new Animated.Value(60)).current;  // slide up
-  const cardOpacity = useRef(new Animated.Value(0)).current;
-  const bearBounce  = useRef(new Animated.Value(0)).current;
+  const popupScale   = useRef(new Animated.Value(0.82)).current;
+  const popupOpacity = useRef(new Animated.Value(0)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const bearY        = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Kart giriş animasyonu
+    // Popup giriş
     Animated.parallel([
-      Animated.spring(cardAnim, {
-        toValue: 0, friction: 7, tension: 50, useNativeDriver: true,
-      }),
-      Animated.timing(cardOpacity, {
-        toValue: 1, duration: 300, useNativeDriver: true,
-      }),
+      Animated.spring(popupScale, { toValue: 1, friction: 6, tension: 60, useNativeDriver: true }),
+      Animated.timing(popupOpacity,    { toValue: 1, duration: 220, useNativeDriver: true }),
+      Animated.timing(backdropOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
     ]).start();
 
     // Ayı zıplama
     Animated.loop(
       Animated.sequence([
-        Animated.timing(bearBounce, { toValue: -12, duration: 500, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(bearBounce, { toValue: 0,   duration: 400, easing: Easing.in(Easing.quad),  useNativeDriver: true }),
-        Animated.delay(800),
+        Animated.timing(bearY, { toValue: -10, duration: 450, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(bearY, { toValue: 0,   duration: 380, easing: Easing.in(Easing.quad),  useNativeDriver: true }),
+        Animated.delay(1000),
       ])
     ).start();
   }, []);
 
+  const dismiss = () => navigation.goBack();
+
   const handleClaim = () => {
-    if (!alreadyClaimed) {
-      claimDailyReward();
-    }
-    navigation.replace('MainTabs');
+    if (!alreadyClaimed) claimDailyReward();
+    dismiss();
   };
 
-  const handleLater = () => {
-    navigation.replace('MainTabs');
-  };
-
-  // 7 hücre → 4+3 yerleşimi: satır 2'ye 1 boş ekle
-  const cells = weekDays.map((dateStr, i) => ({
-    dateStr,
-    status: getDayStatus(dateStr, todayStr, claimedDates),
-    index: i,
-  }));
-  // 8. boş hücre (son satır hizalaması)
-  const paddedCells = [...cells, null];
+  // 7 hücre + 1 boş → 4+3+1=8 düzeni (son satır hizalaması)
+  const cells = weekDays.map((dateStr, i) => ({ dateStr, status: getDayStatus(dateStr, todayStr, claimedDates), index: i }));
 
   return (
-    <GradientBackground colors={COLORS.mainBg}>
-      <View style={[styles.container, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }]}>
+    <View style={styles.root}>
+      <StatusBar translucent backgroundColor="transparent" />
 
-        {/* Başlık şeridi */}
-        <View style={styles.ribbonWrap}>
-          <LinearGradient
-            colors={['#FF6B9D', '#FF4757']}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-            style={styles.ribbon}
-          >
-            {/* Şerit uçları */}
-            <View style={[styles.ribbonTail, styles.ribbonTailLeft]} />
-            <View style={[styles.ribbonTail, styles.ribbonTailRight]} />
-            <Text style={styles.ribbonText}>
-              🌟  {t('daily_title') || 'Günlük Görev'}  🌟
+      {/* Karartma */}
+      <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]} />
+
+      {/* Popup */}
+      <Animated.View style={[
+        styles.popupWrap,
+        { transform: [{ scale: popupScale }], opacity: popupOpacity },
+      ]}>
+        <LinearGradient colors={['#FFF8E7', '#FFE9A0']} style={styles.popup}>
+
+          {/* ── Başlık şeridi ─────────────────────────────────────────── */}
+          <View style={styles.ribbonWrap}>
+            <LinearGradient
+              colors={['#FF6B9D', '#FF4757']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={styles.ribbon}
+            >
+              <Text style={styles.ribbonText}>
+                🌟  {t('daily_title') || 'Günlük Görev'}  🌟
+              </Text>
+            </LinearGradient>
+          </View>
+
+          {/* ── Gün X rozeti ──────────────────────────────────────────── */}
+          <View style={styles.dayBadgeRow}>
+            <LinearGradient
+              colors={['#FDCB6E', '#E17055']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={styles.dayBadge}
+            >
+              <Text style={styles.dayBadgeText}>
+                {t('day_x')?.replace('{x}', dayNumber) || `Gün ${dayNumber}`}
+              </Text>
+            </LinearGradient>
+            {dailyStreak > 1 && (
+              <View style={styles.streakPill}>
+                <Text style={styles.streakText}>🔥 {dailyStreak} seri</Text>
+              </View>
+            )}
+          </View>
+
+          {/* ── 7 günlük grid ─────────────────────────────────────────── */}
+          <View style={styles.grid}>
+            {cells.map((c) => (
+              <DayCell key={c.dateStr} index={c.index} status={c.status} />
+            ))}
+            {/* Boş hücre — son satır hizalaması */}
+            <View style={[styles.dayCell, { opacity: 0 }]} />
+          </View>
+
+          {/* ── Haftalık ilerleme ─────────────────────────────────────── */}
+          <View style={styles.progressRow}>
+            <Text style={styles.progressLabel}>
+              {t('weekly_completion') || 'Haftalık İlerleme'}
             </Text>
-          </LinearGradient>
-          {/* Süsleme yıldızları */}
-          <Text style={styles.starLeft}>✨</Text>
-          <Text style={styles.starRight}>✨</Text>
-        </View>
-
-        {/* Kart + Ayı */}
-        <Animated.View style={[
-          styles.cardWrap,
-          { transform: [{ translateY: cardAnim }], opacity: cardOpacity },
-        ]}>
-          <LinearGradient
-            colors={['#FFF8E7', '#FFEFC4']}
-            style={styles.card}
-          >
-            {/* Gün X rozeti */}
-            <View style={styles.dayBadge}>
+            <View style={styles.progressTrack}>
               <LinearGradient
-                colors={['#FDCB6E', '#E17055']}
+                colors={['#FF6B9D', '#FF4757']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={styles.dayBadgeGrad}
+                style={[styles.progressFill, { width: `${Math.round(weekProgress * 100)}%` }]}
+              />
+            </View>
+            <Text style={styles.progressCount}>{weekClaimed}/7</Text>
+          </View>
+
+          {/* ── Butonlar ──────────────────────────────────────────────── */}
+          <View style={styles.btnRow}>
+            {/* Claim */}
+            <TouchableOpacity
+              style={[styles.claimBtn, alreadyClaimed && { opacity: 0.6 }]}
+              onPress={handleClaim}
+              activeOpacity={0.85}
+            >
+              <View style={styles.claimShadow} />
+              <LinearGradient
+                colors={alreadyClaimed ? ['#B2BEC3', '#95A5A6'] : ['#2ED573', '#1E9F53']}
+                style={styles.claimGrad}
               >
-                <Text style={styles.dayBadgeText}>
-                  {t('day_x')?.replace('{x}', dayNumber) || `Gün ${dayNumber}`}
+                <View style={styles.btnHighlight} />
+                <Text style={styles.claimText}>
+                  {alreadyClaimed ? (t('claimed') || 'Alındı') : (t('claim') || 'Al')}
                 </Text>
               </LinearGradient>
-            </View>
+            </TouchableOpacity>
 
-            {/* 7 günlük grid */}
-            <View style={styles.gridWrap}>
-              {paddedCells.map((cell, i) =>
-                cell ? (
-                  <DayCell key={cell.dateStr} index={cell.index} status={cell.status} />
-                ) : (
-                  <View key="spacer" style={[styles.dayCell, { opacity: 0 }]} />
-                )
-              )}
-            </View>
-
-            {/* Haftalık ilerleme */}
-            <View style={styles.progressSection}>
-              <Text style={styles.progressLabel}>
-                {t('weekly_completion') || 'Haftalık İlerleme'}
-              </Text>
-              <View style={styles.progressTrack}>
-                <LinearGradient
-                  colors={['#FF6B9D', '#FF4757']}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={[styles.progressFill, { width: `${Math.round(weekProgress * 100)}%` }]}
-                />
-              </View>
-              <Text style={styles.progressCount}>{weekClaimed}/7</Text>
-            </View>
-          </LinearGradient>
-
-          {/* Ayı maskotu */}
-          <Animated.View style={[styles.bearWrap, { transform: [{ translateY: bearBounce }] }]}>
-            <Text style={styles.bearEmoji}>🐻</Text>
-          </Animated.View>
-        </Animated.View>
-
-        {/* Streak bilgisi */}
-        {dailyStreak > 1 && (
-          <View style={styles.streakBadge}>
-            <Text style={styles.streakText}>🔥 {dailyStreak} günlük seri!</Text>
+            {/* Later */}
+            <TouchableOpacity style={styles.laterBtn} onPress={dismiss} activeOpacity={0.85}>
+              <View style={styles.laterShadow} />
+              <LinearGradient colors={['#45AAF2', '#2980B9']} style={styles.laterGrad}>
+                <View style={styles.btnHighlight} />
+                <Text style={styles.laterText}>{t('later') || 'Sonra'}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {/* Butonlar */}
-        <View style={styles.btnRow}>
-          {/* Claim butonu */}
-          <TouchableOpacity
-            style={[styles.claimBtn, alreadyClaimed && styles.claimBtnDone]}
-            onPress={handleClaim}
-            activeOpacity={0.85}
-          >
-            <View style={styles.claimBtn3d} />
-            <LinearGradient
-              colors={alreadyClaimed ? ['#B2BEC3', '#95A5A6'] : ['#2ED573', '#1E9F53']}
-              start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-              style={styles.claimBtnGrad}
-            >
-              <View style={styles.claimBtnHighlight} />
-              <Text style={styles.claimBtnText}>
-                {alreadyClaimed
-                  ? (t('claimed') || 'Alındı')
-                  : (t('claim')   || 'Al')}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+        </LinearGradient>
 
-          {/* Later butonu */}
-          <TouchableOpacity
-            style={styles.laterBtn}
-            onPress={handleLater}
-            activeOpacity={0.85}
-          >
-            <View style={styles.laterBtn3d} />
-            <LinearGradient
-              colors={['#45AAF2', '#2980B9']}
-              start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-              style={styles.laterBtnGrad}
-            >
-              <View style={styles.laterBtnHighlight} />
-              <Text style={styles.laterBtnText}>
-                {t('later') || 'Sonra'}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
-      </View>
-    </GradientBackground>
+        {/* Ayı maskotu */}
+        <Animated.View style={[styles.bear, { transform: [{ translateY: bearY }] }]}>
+          <Text style={styles.bearEmoji}>🐻</Text>
+        </Animated.View>
+      </Animated.View>
+    </View>
   );
 }
 
 // ─── Stiller ──────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
 
-  // ── Başlık şeridi ────────────────────────────────────────────────────────
+  // ── Popup kart ───────────────────────────────────────────────────────────
+  popupWrap: {
+    width: POPUP_W,
+    position: 'relative',
+  },
+  popup: {
+    borderRadius: 28,
+    padding: 16,
+    borderWidth: 2.5,
+    borderColor: 'rgba(253,203,110,0.7)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 20,
+  },
+
+  // Şerit
   ribbonWrap: {
     alignItems: 'center',
-    marginTop: 8,
+    marginBottom: 12,
+    marginTop: -4,
   },
   ribbon: {
-    borderRadius: 32,
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    alignItems: 'center',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     shadowColor: '#FF4757',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-  ribbonTail: {
-    position: 'absolute',
-    bottom: -8,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 12,
-    borderRightWidth: 12,
-    borderTopWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-  },
-  ribbonTailLeft: {
-    left: 24,
-    borderTopColor: '#C0392B',
-  },
-  ribbonTailRight: {
-    right: 24,
-    borderTopColor: '#C0392B',
+    shadowRadius: 8,
+    elevation: 6,
   },
   ribbonText: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: 'Fredoka_700Bold',
     color: '#fff',
     letterSpacing: 0.5,
   },
-  starLeft: {
-    position: 'absolute',
-    left: -8,
-    top: 4,
-    fontSize: 22,
-  },
-  starRight: {
-    position: 'absolute',
-    right: -8,
-    top: 4,
-    fontSize: 22,
-  },
 
-  // ── Kart ─────────────────────────────────────────────────────────────────
-  cardWrap: {
-    width: CARD_W,
-    position: 'relative',
-  },
-  card: {
-    borderRadius: 28,
-    padding: 16,
-    shadowColor: '#E17055',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 10,
-    borderWidth: 2,
-    borderColor: 'rgba(253,203,110,0.6)',
-  },
-
-  // Gün X rozeti
-  dayBadge: {
+  // Gün rozeti
+  dayBadgeRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 12,
   },
-  dayBadgeGrad: {
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 6,
+  dayBadge: {
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
   },
   dayBadgeText: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: 'Fredoka_700Bold',
     color: '#fff',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
+  },
+  streakPill: {
+    backgroundColor: 'rgba(255,107,53,0.12)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,53,0.3)',
+  },
+  streakText: {
+    fontSize: 12,
+    fontFamily: 'Nunito_700Bold',
+    color: '#E17055',
   },
 
   // Hücre grid
-  gridWrap: {
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 16,
+    gap: 6,
+    marginBottom: 12,
   },
   dayCell: {
     width: CELL_SIZE,
-    minHeight: CELL_SIZE + 8,
+    minHeight: CELL_SIZE + 6,
     backgroundColor: '#E8D4A8',
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    gap: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+    gap: 1,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',
@@ -420,8 +370,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF3CD',
     shadowColor: '#FFC312',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
+    shadowOpacity: 0.6,
+    shadowRadius: 5,
     elevation: 4,
   },
   dayCellClaimed: {
@@ -429,24 +379,22 @@ const styles = StyleSheet.create({
     borderColor: '#00B894',
   },
   dayCellLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: 'Nunito_700Bold',
     color: '#7D5A1C',
   },
   dayCellEmoji: {
-    fontSize: 22,
+    fontSize: 20,
   },
   dayCellStatus: {
-    fontSize: 9,
+    fontSize: 8,
     fontFamily: 'Nunito_700Bold',
     color: '#7D5A1C',
     textAlign: 'center',
+    lineHeight: 10,
   },
-  dimText: {
-    color: '#B2BEC3',
-  },
+  dimText: { color: '#B2BEC3' },
 
-  // Alındı overlay
   claimedOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,184,148,0.15)',
@@ -454,174 +402,127 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   claimedCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#00B894',
     alignItems: 'center',
     justifyContent: 'center',
   },
   claimedCheck: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#fff',
     fontFamily: 'Nunito_700Bold',
   },
-
-  // Kilitli overlay
   lockOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(45,52,54,0.18)',
+    backgroundColor: 'rgba(45,52,54,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 10,
   },
-  lockIcon: {
-    fontSize: 20,
-  },
+  lockEmoji: { fontSize: 16 },
 
-  // Haftalık ilerleme
-  progressSection: {
+  // Haftalık bar
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    marginBottom: 14,
   },
   progressLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'Nunito_700Bold',
     color: '#7D5A1C',
     flexShrink: 0,
   },
   progressTrack: {
     flex: 1,
-    height: 10,
+    height: 8,
     backgroundColor: 'rgba(0,0,0,0.10)',
-    borderRadius: 5,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 5,
-    minWidth: 8,
+    borderRadius: 4,
+    minWidth: 6,
   },
   progressCount: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'Nunito_700Bold',
     color: '#7D5A1C',
-    minWidth: 22,
+    minWidth: 20,
     textAlign: 'right',
   },
 
-  // Ayı maskotu
-  bearWrap: {
-    position: 'absolute',
-    right: -18,
-    bottom: -16,
-  },
-  bearEmoji: {
-    fontSize: 56,
-  },
-
-  // Streak
-  streakBadge: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 7,
-    shadowColor: '#FF4757',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  streakText: {
-    fontSize: 14,
-    fontFamily: 'Fredoka_700Bold',
-    color: '#E17055',
-  },
-
-  // ── Butonlar ─────────────────────────────────────────────────────────────
+  // Butonlar
   btnRow: {
     flexDirection: 'row',
-    gap: 12,
-    width: CARD_W,
+    gap: 10,
   },
-
-  // Claim butonu (geniş)
   claimBtn: {
     flex: 2,
+    height: 52,
     position: 'relative',
-    height: 58,
   },
-  claimBtnDone: {
-    opacity: 0.75,
-  },
-  claimBtn3d: {
+  claimShadow: {
     position: 'absolute',
-    bottom: -5,
-    left: 0,
-    right: 0,
-    height: 58,
-    borderRadius: 29,
+    bottom: -4, left: 0, right: 0, height: 52,
+    borderRadius: 26,
     backgroundColor: '#1A7A3C',
   },
-  claimBtnGrad: {
+  claimGrad: {
     flex: 1,
-    borderRadius: 29,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
-  claimBtnHighlight: {
-    position: 'absolute',
-    top: 4,
-    left: 20,
-    right: 20,
-    height: '38%',
-    backgroundColor: 'rgba(255,255,255,0.28)',
-    borderRadius: 20,
-  },
-  claimBtnText: {
-    fontSize: 22,
+  claimText: {
+    fontSize: 20,
     fontFamily: 'Fredoka_700Bold',
     color: '#fff',
     letterSpacing: 1,
   },
-
-  // Later butonu (dar)
   laterBtn: {
     flex: 1,
+    height: 52,
     position: 'relative',
-    height: 58,
   },
-  laterBtn3d: {
+  laterShadow: {
     position: 'absolute',
-    bottom: -5,
-    left: 0,
-    right: 0,
-    height: 58,
-    borderRadius: 29,
+    bottom: -4, left: 0, right: 0, height: 52,
+    borderRadius: 26,
     backgroundColor: '#1A6A9A',
   },
-  laterBtnGrad: {
+  laterGrad: {
     flex: 1,
-    borderRadius: 29,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
-  laterBtnHighlight: {
-    position: 'absolute',
-    top: 4,
-    left: 10,
-    right: 10,
-    height: '38%',
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: 20,
-  },
-  laterBtnText: {
-    fontSize: 20,
+  laterText: {
+    fontSize: 18,
     fontFamily: 'Fredoka_700Bold',
     color: '#fff',
-    letterSpacing: 0.5,
+  },
+  btnHighlight: {
+    position: 'absolute',
+    top: 4, left: 12, right: 12,
+    height: '36%',
+    backgroundColor: 'rgba(255,255,255,0.28)',
+    borderRadius: 16,
+  },
+
+  // Ayı maskotu
+  bear: {
+    position: 'absolute',
+    right: -20,
+    bottom: 52,
+  },
+  bearEmoji: {
+    fontSize: 52,
   },
 });

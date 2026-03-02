@@ -1,14 +1,14 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import SplashScreen from '../screens/SplashScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
-import CategoriesScreen from '../screens/CategoriesScreen';
+import MainTabNavigator from './MainTabNavigator';
 import ColoringScreen from '../screens/ColoringScreen';
 import CompletionScreen from '../screens/CompletionScreen';
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
@@ -17,26 +17,22 @@ export default function AppNavigator() {
         initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
-          cardStyle: { backgroundColor: 'transparent' },
-          animationEnabled: true,
-          cardStyleInterpolator: ({ current, layouts }) => ({
-            cardStyle: {
-              opacity: current.progress,
-              transform: [
-                {
-                  translateX: current.progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [layouts.screen.width * 0.3, 0],
-                  }),
-                },
-              ],
-            },
-          }),
+          animation: 'slide_from_right',
+          contentStyle: { backgroundColor: 'transparent' },
         }}
       >
-        <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="Categories" component={CategoriesScreen} />
+        {/* Başlangıç akışı */}
+        <Stack.Screen name="Splash" component={SplashScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ animation: 'fade' }} />
+
+        {/* Ana uygulama — Tab bar burada sabit kalır */}
+        <Stack.Screen
+          name="MainTabs"
+          component={MainTabNavigator}
+          options={{ animation: 'fade' }}
+        />
+
+        {/* Tam ekran oyun ekranları — Tab bar gösterilmez */}
         <Stack.Screen name="Coloring" component={ColoringScreen} />
         <Stack.Screen name="Completion" component={CompletionScreen} />
       </Stack.Navigator>

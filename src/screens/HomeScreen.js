@@ -146,7 +146,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* Kategori grid */}
         <FlatList
-          data={CATEGORIES_V2}
+          data={[...CATEGORIES_V2].sort((a, b) => (a.locked ? 1 : 0) - (b.locked ? 1 : 0))}
           keyExtractor={(item) => item.id}
           numColumns={2}
           renderItem={renderItem}

@@ -67,6 +67,20 @@ export default {
   gallery: 'Gallery',
   settings: 'Settings',
 
+  // Welcome screen
+  welcome_back: 'Welcome back!',
+  my_profile: 'My Profile',
+  home: 'Home',
+
+  // Category screen filters
+  all: 'All',
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+  no_animals: 'No animals at this difficulty',
+  gallery_coming_soon: 'Your completed animals will appear here!',
+  language: 'Language',
+
   // Settings
   sound: 'Sound',
   language_label: 'Language',

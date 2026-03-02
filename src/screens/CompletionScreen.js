@@ -185,7 +185,8 @@ export default function CompletionScreen({ navigation, route }) {
     if (hasNext) {
       navigation.replace('Coloring', { categoryId, animalIndex: nextIndex });
     } else {
-      navigation.navigate('Categories');
+      // Kategori bitti, ana menüye sıfırla
+      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
     }
   };
 
@@ -193,7 +194,8 @@ export default function CompletionScreen({ navigation, route }) {
     navigation.replace('Coloring', { categoryId, animalIndex });
   };
 
-  const handleHome = () => navigation.navigate('Categories');
+  const handleHome = () =>
+    navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
 
   return (
     <GradientBackground colors={COLORS.mainBg}>

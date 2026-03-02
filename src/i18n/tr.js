@@ -67,6 +67,20 @@ export default {
   gallery: 'Galeri',
   settings: 'Ayarlar',
 
+  // Hoş geldin ekranı
+  welcome_back: 'Tekrar hoş geldin!',
+  my_profile: 'Profilim',
+  home: 'Ana Menü',
+
+  // Kategori ekranı filtreleri
+  all: 'Tümü',
+  easy: 'Kolay',
+  medium: 'Orta',
+  hard: 'Zor',
+  no_animals: 'Bu zorlukta hayvan yok',
+  gallery_coming_soon: 'Tamamladığın hayvanlar burada görünecek!',
+  language: 'Dil',
+
   // Ayarlar
   sound: 'Ses',
   language_label: 'Dil',

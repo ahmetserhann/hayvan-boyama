@@ -9,6 +9,7 @@ import {
   Text,
   StyleSheet,
   Animated,
+  Easing,
   Dimensions,
   StatusBar,
 } from 'react-native';
@@ -19,6 +20,8 @@ import { SIZES } from '../theme/fonts';
 import { useTranslation } from '../i18n/index';
 
 const { width: SW, height: SH } = Dimensions.get('window');
+const BAR_W = Math.min(SW * 0.68, 320);   // progress bar genişliği
+const BADGE_W = 50;                         // yüzde balonu genişliği
 
 // "LOADING..." harflerinin renkleri
 const LETTER_COLORS = ['#FF6B9D', '#FF9F43', '#FFC312', '#2ED573', '#45AAF2', '#A55EEA', '#FF6B9D', '#FF9F43', '#FF4757', '#FFC312'];
@@ -144,31 +147,65 @@ function PawLogo() {
   );
 }
 
-// Yükleme çubuğu
+// Yükleme çubuğu — gökkuşağı gradyan + uçta yüzde balonu
 function LoadingBar() {
   const progressAnim = useRef(new Animated.Value(0)).current;
+  const [displayPercent, setDisplayPercent] = useState(0);
 
   useEffect(() => {
+    const listenerId = progressAnim.addListener(({ value }) => {
+      setDisplayPercent(Math.round(value * 100));
+    });
+
     Animated.timing(progressAnim, {
       toValue: 1,
       duration: 2200,
       useNativeDriver: false,
+      easing: Easing.inOut(Easing.ease),
     }).start();
+
+    return () => progressAnim.removeListener(listenerId);
   }, []);
 
+  // Dolum genişliği (piksel)
+  const fillWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, BAR_W],
+  });
+
+  // Balonun soldan konumu: dolum ucunda ortada durur, başta 0'dan küçük olmasın
+  const badgeLeft = progressAnim.interpolate({
+    inputRange: [0, BADGE_W / BAR_W, 1],
+    outputRange: [0, 0, BAR_W - BADGE_W],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <View style={styles.loadingBarOuter}>
-      <Animated.View
-        style={[
-          styles.loadingBarFill,
-          {
-            width: progressAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['0%', '100%'],
-            }),
-          },
-        ]}
-      />
+    <View style={styles.barWrapper}>
+      {/* Yüzde balonu — dolum ucunda kayar */}
+      <Animated.View style={[styles.percentBadge, { left: badgeLeft }]}>
+        <Text style={styles.percentBadgeText}>{displayPercent}%</Text>
+        {/* Aşağıya bakan ok */}
+        <View style={styles.percentBadgeArrow} />
+      </Animated.View>
+
+      {/* Balon için boşluk */}
+      <View style={{ height: 26 }} />
+
+      {/* Bar dış kabı */}
+      <View style={styles.loadingBarOuter}>
+        {/* Gökkuşağı dolum — Animated.View width'i artıkça daha fazla gradyan açığa çıkar */}
+        <Animated.View style={{ width: fillWidth, height: '100%', overflow: 'hidden', borderRadius: 20 }}>
+          <LinearGradient
+            colors={['#FF6B9D', '#FF9F43', '#FFC312', '#2ED573', '#45AAF2', '#A55EEA']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ width: BAR_W, height: '100%' }}
+          />
+          {/* Üst glossy parlaklık şeridi */}
+          <View style={styles.barFillHighlight} />
+        </Animated.View>
+      </View>
     </View>
   );
 }
@@ -179,6 +216,7 @@ export default function SplashScreen({ navigation }) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Her zaman Welcome'a git — WelcomeScreen kendi içinde yeni/dönen kullanıcıyı ayırt eder
       navigation.replace('Welcome');
     }, 2600);
     return () => clearTimeout(timer);
@@ -343,18 +381,66 @@ const styles = StyleSheet.create({
   },
 
   // Yükleme çubuğu
+  barWrapper: {
+    alignItems: 'flex-start',
+    width: BAR_W,
+  },
   loadingBarOuter: {
-    width: SW * 0.55,
-    height: 16,
-    backgroundColor: 'rgba(200,200,200,0.5)',
+    width: BAR_W,
+    height: 18,
+    backgroundColor: 'rgba(200,200,200,0.38)',
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderColor: 'rgba(255,255,255,0.85)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  loadingBarFill: {
-    height: '100%',
-    backgroundColor: '#FF9F43',
-    borderRadius: 20,
+  barFillHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 4,
+    right: 4,
+    height: '45%',
+    backgroundColor: 'rgba(255,255,255,0.40)',
+    borderRadius: 12,
+  },
+
+  // Yüzde balonu
+  percentBadge: {
+    position: 'absolute',
+    top: 0,
+    width: BADGE_W,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 10,
+    paddingVertical: 3,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  percentBadgeText: {
+    fontSize: 11,
+    fontFamily: 'Fredoka_700Bold',
+    color: '#555',
+  },
+  percentBadgeArrow: {
+    position: 'absolute',
+    bottom: -5,
+    left: '50%',
+    marginLeft: -5,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderTopWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: 'rgba(255,255,255,0.95)',
   },
 });
